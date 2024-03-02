@@ -6,7 +6,7 @@ const { kafkaRoute } = require('./kafka/message-router');
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 1000;
+const PORT = process.env.GATEWAY_SERVICE_PORT || 1000;
 
 app.use(cors());
 app.use(express.urlencoded({ extended: true }));

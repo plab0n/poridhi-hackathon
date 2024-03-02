@@ -7,7 +7,7 @@ const { mongodbRoute } = require('./mongodb/mongo-route');
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 2000;
+const PORT = process.env.FEED_SERVICE_PORT || 2000;
 
 app.use(cors());
 app.use(express.urlencoded({ extended: true }));

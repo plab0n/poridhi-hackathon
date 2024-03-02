@@ -6,23 +6,23 @@ networks:
     driver: bridge
 
 services:
-  adderservice:
-    image: ${IMAGE_NAME}:${BUILD_VERSION}-service1
-    container_name: service1
+  gatewayservice:
+    image: ${IMAGE_NAME}:${BUILD_VERSION}-gatewayservice
+    container_name: gatewayservice
     build:
       context: ./
-      dockerfile: ./src/service-1/Dockerfile
+      dockerfile: ./gatewayservice/Dockerfile
       cache_from:
-        - ${IMAGE_NAME}:${BUILD_VERSION}-service1
+        - ${IMAGE_NAME}:${BUILD_VERSION}-gatewayservice
     deploy:
       resources:
         limits:
           memory: 120M
     restart: unless-stopped
     ports:
-      - "${SERVICE_ONE_PORT}"
+      - "${GATEWAY_SERVICE_PORT}"
     environment:
-      - ADDER_SERVICE_PORT
+      - GATEWAY_SERVICE_PORT
       - OTEL_EXPORTER_OTLP_ENDPOINT
       - OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE
       - OTEL_RESOURCE_ATTRIBUTES
@@ -30,6 +30,75 @@ services:
     depends_on:
       otelcol:
         condition: service_started
+
+  feedservice:
+    image: ${IMAGE_NAME}:${BUILD_VERSION}-feedservice
+    container_name: feedservice
+    build:
+      context: ./
+      dockerfile: ./feedservice/Dockerfile
+      cache_from:
+        - ${IMAGE_NAME}:${BUILD_VERSION}-feedservice
+    deploy:
+      resources:
+        limits:
+          memory: 120M
+    restart: unless-stopped
+    ports:
+      - "${FEED_SERVICE_PORT}"
+    environment:
+      - FEED_SERVICE_PORT
+      - OTEL_EXPORTER_OTLP_ENDPOINT
+      - OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE
+      - OTEL_RESOURCE_ATTRIBUTES
+      - OTEL_SERVICE_NAME=adderservice
+    depends_on:
+      otelcol:
+        condition: service_started
+
+  kafka:
+    image: ${IMAGE_NAME}:${BUILD_VERSION}-kafka
+    container_name: kafka
+    build:
+      context: ./
+      dockerfile: ./kafka/Dockerfile
+      cache_from:
+        - ${IMAGE_NAME}:${BUILD_VERSION}-kafka
+    deploy:
+      resources:
+        limits:
+          memory: 500M
+    restart: unless-stopped
+    environment:
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://${OTEL_COLLECTOR_HOST}:${OTEL_COLLECTOR_PORT_HTTP}
+      - OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE
+      - OTEL_RESOURCE_ATTRIBUTES
+      - OTEL_SERVICE_NAME=kafka
+      - KAFKA_HEAP_OPTS=-Xmx200m -Xms200m
+    healthcheck:
+      test: nc -z kafka 9092
+      start_period: 10s
+      interval: 5s
+      timeout: 10s
+      retries: 10
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    restart: always
+    ports:
+        - "${MONGODB_PORT}"
+    volumes:
+        - ./volumns/mongodb_data:/data/db
+
+  redis:
+    image: redis
+    restart: always
+    ports:
+        - "${REDIS_PORT}"
+    volumes:
+        - ./volumns/redis_data:/data/db 
 
   otelcol:
     image: ${COLLECTOR_CONTRIB_IMAGE}
@@ -41,8 +110,8 @@ services:
     restart: unless-stopped
     command: [ "--config=/etc/otelcol-config.yml", "--config=/etc/otelcol-config-extras.yml" ]
     volumes:
-      - ./src/otelcollector/otelcol-config.yml:/etc/otelcol-config.yml
-      - ./src/otelcollector/otelcol-config-extras.yml:/etc/otelcol-config-extras.yml
+      - ./otelcollector/otelcol-config.yml:/etc/otelcol-config.yml
+      - ./otelcollector/otelcol-config-extras.yml:/etc/otelcol-config-extras.yml
     ports:
       - "${OTEL_COLLECTOR_PORT_GRPC}"
       - "${OTEL_COLLECTOR_PORT_HTTP}"
