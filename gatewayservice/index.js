@@ -16,6 +16,12 @@ app.use(express.json());
 
 app.use('/api/v1', kafkaRoute);
 
+app.get('/api/v1/feed', (req, res) => {
+   //TODO
+   //Get Data from service two via http
+   //return data
+   res.send('Hello World! I am a multiplier service.');
+});
 app.get('/', (req, res) => {
    res.send('Hello World! I am a multiplier service.');
 });

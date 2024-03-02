@@ -1,11 +1,11 @@
-const Message = require('./message-schema');
+const Feed = require('./feed-schema');
 
 async function saveMessage(content) {
-   return await Message.create({ content });
+   return await Feed.create({ content });
 }
 
 async function fetchMessages() {
-   return await Message.find();
+   return await Feed.find();
 }
 
 module.exports = {

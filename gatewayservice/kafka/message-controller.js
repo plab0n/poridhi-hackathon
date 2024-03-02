@@ -1,6 +1,6 @@
 const { sendMessageToKafka } = require('./kafka-producer');
 
- async function createMessage(req, res) {
+ async function addFeed(req, res) {
    const { content } = req.body;
    try {
       // Save to Kafka
@@ -11,4 +11,4 @@ const { sendMessageToKafka } = require('./kafka-producer');
    }
 }
 
-module.exports = {createMessage}
+module.exports = {addFeed}
