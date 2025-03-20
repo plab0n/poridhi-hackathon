@@ -1,4 +1,4 @@
-# Poridhi Hackathon Project
+# Distributed tracing with open-telemetry
 
 A microservices-based application with distributed tracing and monitoring capabilities using OpenTelemetry, Jaeger, and other modern technologies.
 
